@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# This controller deals with the cart API requests.
 class CartsController < ApplicationController
   before_action :check_cart_params, only: :create
 
@@ -21,7 +24,7 @@ class CartsController < ApplicationController
 
   def check_cart_params
     errors = []
-    errors << 'cart hash is required' unless params[:cart].present?
+    errors << 'cart hash is required' if params[:cart].blank?
     errors << 'reference key is required' if params.dig(:cart, :reference).blank?
     errors << 'lineItems key is required' if params.dig(:cart, :lineItems).blank?
 
@@ -37,7 +40,7 @@ class CartsController < ApplicationController
         reference: cart_params[:reference],
         lineItems: cart_with_discount[:line_items],
         totalPrice: cart_with_discount[:total_price]
-      }.deep_stringify_keys
+      }
     }
   end
 

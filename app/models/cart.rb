@@ -1,14 +1,17 @@
 # frozen_string_literal: true
 
+# This class validates the presence and format of the keys we need to calculate discounts as expected.
+# Calutates the discount price and returns the hash with the discounted_price key for each item element and the key total_price.
 class Cart
   include ActiveModel::Validations
-
+  # This hash has functions as key to find the appropriate discount rate.
+  # Depending on the state of the cart (e.g how many items there are), we will pick a different discount.
   DISCOUNT_PROGRESSION = {
     ->(count) { count <= 1 } => 0.0,
     ->(count) { count == 2 } => 0.05,
     ->(count) { count == 3 } => 0.10,
     ->(count) { count == 4 } => 0.20,
-    ->(count) { count >= 5 } => 0.25,
+    ->(count) { count >= 5 } => 0.25
   }
 
   validate :validate_line_items
@@ -17,17 +20,8 @@ class Cart
     @line_items = line_items.map(&:to_h)
   end
 
-  def eligible_discount?(item)
-    item[:collection] != 'KETO'
-  end
-
   def calculate_cart_discount
     items = calculate_discounts
-
-    items = items.each do |hash|
-      hash.delete("allows_discount")
-      hash
-    end
 
     {
       line_items: items,
@@ -61,7 +55,7 @@ class Cart
       if item[:collection].blank?
         errors.add(:base, "Collection can't be blank")
       elsif !item[:collection].is_a?(String)
-        errors.add(:base, "Collection must be a string")
+        errors.add(:base, 'Collection must be a string')
       end
     end
   end
@@ -77,11 +71,17 @@ class Cart
     end
   end
 
+  # This method is used to find the discount percentage we must apply, regarding
+  # the discountable_items_count output (quantity of items in the cart).
   def discount_percentage
     DISCOUNT_PROGRESSION.find { |condition, _| condition.call(discountable_items_count) }[1]
   end
 
   def discountable_items_count
     @line_items.count { |item| eligible_discount?(item) }
+  end
+
+  def eligible_discount?(item)
+    item[:collection] != 'KETO'
   end
 end
